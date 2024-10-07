@@ -1,12 +1,19 @@
 import random
+import time
 
 def imprimirMesa(mesa):
-    print("┌─┬─┬─┬─┐")
+    print("┌───┬───┬───┬───┐")
     for i in range(4):
-        print("│" + "│".join(mesa[i]) + "│")
+        print("│ " + " │ ".join(
+            #Colorindo a mesa
+            ["\033[91m" + 'X' + "\033[0m" if x == 'X' 
+                else "\033[94m" + 'O' + "\033[0m" if x == 'O' 
+                    else x for x in mesa[i]]
+        ) + " │")
         if i != 3:
-            print("├─┼─┼─┼─┤")
-    print("└─┴─┴─┴─┘")
+            print("├───┼───┼───┼───┤")
+    print("└───┴───┴───┴───┘")
+
 
 def verificarMesaCheia(mesa):
     for linha in mesa:
@@ -14,185 +21,167 @@ def verificarMesaCheia(mesa):
             return False
     return True
 
-def verificarVitoria(mesa, jogador):
-    for i in range(4):
-        if all([mesa[i][j] == jogador 
-                for j in range(4)]):
+#Verifica todas as linhas, colunas e diagonais
+def verificarMesa(mesa, jogador):
+    for linha in range(4):
+        if all([mesa[linha][coluna] == jogador 
+                for coluna in range(4)]):
             return True
 
-    for j in range(4):
-        if all([mesa[i][j] == jogador 
-                for i in range(4)]):
+    for coluna in range(4):
+        if all([mesa[linha][coluna] == jogador 
+                for linha in range(4)]):
             return True
     
-    if all([mesa[i][i] == jogador 
-            for i in range(4)]
-        ) or all([mesa[i][3-i] == jogador 
-                for i in range(4)]):
+    if all([mesa[diagonal][diagonal] == jogador 
+            for diagonal in range(4)]
+        ) or all([mesa[diagonal][3-diagonal] == jogador 
+                for diagonal in range(4)]):
         return True
     
     return False
 
+#Heurística avalia a posição de Max e Min em três dimensões: linhas, colunas e diagonais. 
+#Retorna um valor numérico que representa a pontuação dessa posição para o jogador, que pode ser positivo para vantagem, negativo para desvantagem e zero para neutro.
 def avaliarMinimax(mesa, jogador):
     oponente = 'O' if jogador == 'X' else 'X'
     pontuacao = 0
-    
-    # Verificar linhas
+
+    #Avaliar linhas, colunas ou diagonais
+    def avaliarSequencia(sequencia, jogador, oponente):
+        jogador_count = sum(1 for marca in sequencia if marca == jogador)
+        oponente_count = sum(1 for marca in sequencia if marca == oponente)
+
+        #Avalia o oponente
+        if oponente_count == 0:
+            if jogador_count == 4:
+                return 10 #Jogador vai vencer
+            elif jogador_count == 3:
+                return 5 #Jogador prestes a vencer
+            elif jogador_count == 2:
+                return 2 #Jogador tem chance razoável
+
+        #Avalia o jogador
+        if jogador_count == 0:
+            if oponente_count == 4:
+                return -10 #Derrota garantida para jogador.
+            elif oponente_count == 3:
+                return -5 #Oponente prestes a vencer.
+            elif oponente_count == 2:
+                return -2 #Oponente tem chance razoável.
+
+        return 0
+
+    #Aqui é feito a avaliação geral de estado para obter a pontuação
     for i in range(4):
-        linha_jogador = sum([1 for j in range(4) if mesa[i][j] == jogador])
-        linha_oponente = sum([1 for j in range(4) if mesa[i][j] == oponente])
-        if linha_oponente == 0:
-            if linha_jogador == 4:
-                return 10  # Vitória garantida
-            elif linha_jogador == 3:
-                pontuacao += 5
-            elif linha_jogador == 2:
-                pontuacao += 2
-        if linha_jogador == 0:
-            if linha_oponente == 4:
-                return -10  # Derrota garantida
-            elif linha_oponente == 3:
-                pontuacao -= 5
-            elif linha_oponente == 2:
-                pontuacao -= 2
+        pontuacao += avaliarSequencia(mesa[i], jogador, oponente)
 
-    # Verificar colunas
     for j in range(4):
-        coluna_jogador = sum([1 for i in range(4) if mesa[i][j] == jogador])
-        coluna_oponente = sum([1 for i in range(4) if mesa[i][j] == oponente])
-        if coluna_oponente == 0:
-            if coluna_jogador == 4:
-                return 10  # Vitória garantida
-            elif coluna_jogador == 3:
-                pontuacao += 5
-            elif coluna_jogador == 2:
-                pontuacao += 2
-        if coluna_jogador == 0:
-            if coluna_oponente == 4:
-                return -10  # Derrota garantida
-            elif coluna_oponente == 3:
-                pontuacao -= 5
-            elif coluna_oponente == 2:
-                pontuacao -= 2
+        coluna = [mesa[i][j] for i in range(4)]
+        pontuacao += avaliarSequencia(coluna, jogador, oponente)
 
-    # Verificar diagonais
-    diagonal_jogador1 = sum([1 for i in range(4) if mesa[i][i] == jogador])
-    diagonal_oponente1 = sum([1 for i in range(4) if mesa[i][i] == oponente])
-    if diagonal_oponente1 == 0:
-        if diagonal_jogador1 == 4:
-            return 10
-        elif diagonal_jogador1 == 3:
-            pontuacao += 5
-        elif diagonal_jogador1 == 2:
-            pontuacao += 2
-    if diagonal_jogador1 == 0:
-        if diagonal_oponente1 == 4:
-            return -10
-        elif diagonal_oponente1 == 3:
-            pontuacao -= 5
-        elif diagonal_oponente1 == 2:
-            pontuacao -= 2
-
-    diagonal_jogador2 = sum([1 for i in range(4) if mesa[i][3-i] == jogador])
-    diagonal_oponente2 = sum([1 for i in range(4) if mesa[i][3-i] == oponente])
-    if diagonal_oponente2 == 0:
-        if diagonal_jogador2 == 4:
-            return 10
-        elif diagonal_jogador2 == 3:
-            pontuacao += 5
-        elif diagonal_jogador2 == 2:
-            pontuacao += 2
-    if diagonal_jogador2 == 0:
-        if diagonal_oponente2 == 4:
-            return -10
-        elif diagonal_oponente2 == 3:
-            pontuacao -= 5
-        elif diagonal_oponente2 == 2:
-            pontuacao -= 2
+    diagonal1 = [mesa[i][i] for i in range(4)]
+    diagonal2 = [mesa[i][3 - i] for i in range(4)]
+    
+    pontuacao += avaliarSequencia(diagonal1, jogador, oponente)
+    pontuacao += avaliarSequencia(diagonal2, jogador, oponente)
 
     return pontuacao
 
-def minimax(mesa, profundidade, is_maximizando, jogador, alpha, beta, max_depth):
+def minimax(mesa, profundidade, jogadaMax, jogador, alpha, beta, profundidadeMax):
     oponente = 'O' if jogador == 'X' else 'X'
-    
-    if verificarVitoria(mesa, jogador):
-        return 10 - profundidade
-    if verificarVitoria(mesa, oponente):
-        return profundidade - 10
-    if verificarMesaCheia(mesa) or profundidade >= max_depth:
-        return avaliarMinimax(mesa, jogador)
-    
-    if is_maximizando:
-        melhor_valor = -float('inf')
-        for i in range(4):
-            for j in range(4):
-                if mesa[i][j] == " ":
-                    mesa[i][j] = jogador
-                    valor_atual = minimax(mesa, profundidade + 1, False, jogador, alpha, beta, max_depth)
-                    mesa[i][j] = " "
-                    melhor_valor = max(melhor_valor, valor_atual)
-                    alpha = max(alpha, valor_atual)
-                    if beta <= alpha:
-                        break
-        return melhor_valor
-    else:
-        melhor_valor = float('inf')
-        for i in range(4):
-            for j in range(4):
-                if mesa[i][j] == " ":
-                    mesa[i][j] = oponente
-                    valor_atual = minimax(mesa, profundidade + 1, True, jogador, alpha, beta, max_depth)
-                    mesa[i][j] = " "
-                    melhor_valor = min(melhor_valor, valor_atual)
-                    beta = min(beta, valor_atual)
-                    if beta <= alpha:
-                        break
-        return melhor_valor
 
-def jogadaMinimax(mesa, jogador, usar_poda, max_depth):
-    melhor_valor = -float('inf')
-    melhor_jogada = None
-    alpha = -float('inf')
-    beta = float('inf')
+    #Verifica se houve vitória ou empate
+    if verificarMesa(mesa, jogador):
+        return 10 - profundidade
+    if verificarMesa(mesa, oponente):
+        return profundidade - 10
+    if verificarMesaCheia(mesa) or profundidade >= profundidadeMax:
+        return avaliarMinimax(mesa, jogador)
+
+    #Se jogador == max
+    if jogadaMax:
+        #Melhor valor possível == -infinito
+        melhorValor = -float('inf')
+        for linha in range(4):
+            for coluna in range(4):
+                #Se campo == vazio, faz jogada temporária
+                if mesa[linha][coluna] == " ":
+                    mesa[linha][coluna] = jogador
+                    valorAtual = minimax(mesa, profundidade + 1, False, jogador, alpha, beta, profundidadeMax)
+                    #Após minimax avaliar, desfaz a jogada
+                    mesa[linha][coluna] = " "
+                    #Atualiza melhor valor
+                    melhorValor = max(melhorValor, valorAtual)
+                    if alpha is not None:
+                        #Atualiza limite inferior
+                        alpha = max(alpha, valorAtual)
+                        #Poda
+                        if beta is not None and beta <= alpha:
+                            break
+        return melhorValor
+    else:
+        #Pior valor possível == +infinito
+        melhorValor = float('inf')
+        for linha in range(4):
+            for coluna in range(4):
+                #Se campo == vazio, faz jogada temporária do oponente
+                if mesa[linha][coluna] == " ":
+                    mesa[linha][coluna] = oponente
+                    valorAtual = minimax(mesa, profundidade + 1, True, jogador, alpha, beta, profundidadeMax)
+                    #Após minimax avaliar, desfaz a jogada
+                    mesa[linha][coluna] = " "
+                    #Atualiza pior valor
+                    melhorValor = min(melhorValor, valorAtual)
+                    if beta is not None:
+                        #Atualiza limite superior
+                        beta = min(beta, valorAtual)
+                        #Poda
+                        if alpha is not None and beta <= alpha:
+                            break
+        return melhorValor
+
+def jogadaMinimax(mesa, jogador, poda, profundidade):
+    #Considera a primeira jogada sempre X (Max)
+    timerInit = time.time()
+    melhorValor = -float('inf')
+    melhorJogada = None
+    alpha = -float('inf') if poda else None
+    beta = float('inf') if poda else None
+
+    for linha in range(4):
+        for coluna in range(4):
+            #Se campo == vazio, faz primeira jogada temporária e inicia a recurção
+            if mesa[linha][coluna] == " ":
+                mesa[linha][coluna] = jogador
+                valorAtual = minimax(mesa, 0, False, jogador, alpha, beta, profundidade)
+                #Após minimax avaliar, desfaz a jogada
+                mesa[linha][coluna] = " "
+                #Se o valor atual é melhor, Define a melhor jogada
+                if valorAtual > melhorValor:
+                    melhorValor = valorAtual
+                    melhorJogada = (linha, coluna)
     
-    for i in range(4):
-        for j in range(4):
-            if mesa[i][j] == " ":
-                mesa[i][j] = jogador
-                if usar_poda:
-                    valor_atual = minimax(mesa, 0, False, jogador, alpha, beta, max_depth)
-                else:
-                    valor_atual = minimax(mesa, 0, False, jogador, -float('inf'), float('inf'), max_depth)
-                mesa[i][j] = " "
-                if valor_atual > melhor_valor:
-                    melhor_valor = valor_atual
-                    melhor_jogada = (i, j)
-    return melhor_jogada
+    timerEnd = time.time()
+    print("O Computador demorou " + str(timerEnd - timerInit) + "segundos para realizar a jogada.")
+    return melhorJogada
 
 def main():
     mesa = [[" " for _ in range(4)] for _ in range(4)]
-    print("Jogo da Velha 4x4")
-    print("1- Humano vs Computador")
-    print("2- Computador vs Computador")
-    modo = int(input("Escolha: "))
-
-    print("Estratégia do Computador")
-    print("1- Aleatória")
-    print("2- Minimax")
-    print("3- Minimax com Alfa-Beta")
-    estrategia = int(input("Escolha: "))
+    modo = int(input("Jogo da Velha 4x4\n1. Humano vs Computador\n2. Computador vs Computador\nEscolha: "))
+    estrategia = int(input("Estratégia do Computador\n1. Aleatória\n2. Minimax\n3. Minimax com Alfa-Beta\nEscolha: "))
     
     if estrategia == 2 or estrategia == 3:
-        max_depth = int(input("Escolha a profundidade máxima para Minimax (ex: 1, 2, 3...): "))
+        profundidade = int(input("Escolha a profundidade máxima: "))
     
     jogador = 'X'
     while True:
         imprimirMesa(mesa)
         
-        if verificarVitoria(mesa, 'X'):
+        if verificarMesa(mesa, 'X'):
             print("Jogador X venceu!")
             break
-        if verificarVitoria(mesa, 'O'):
+        if verificarMesa(mesa, 'O'):
             print("Jogador O venceu!")
             break
         if verificarMesaCheia(mesa):
@@ -201,24 +190,24 @@ def main():
         
         if modo == 2 or (modo == 1 and jogador == 'O'):
             if estrategia == 1:
-                jogadas_possiveis = [(i, j) for i in range(4) for j in range(4) if mesa[i][j] == " "]
-                i, j = random.choice(jogadas_possiveis)
+                jogadasPossiveis = [(i, j) for i in range(4) for j in range(4) if mesa[i][j] == " "]
+                i, j = random.choice(jogadasPossiveis)
             elif estrategia == 2:
-                i, j = jogadaMinimax(mesa, jogador, False, max_depth)
+                i, j = jogadaMinimax(mesa, jogador, False, profundidade)
             elif estrategia == 3:
-                i, j = jogadaMinimax(mesa, jogador, True, max_depth)
+                i, j = jogadaMinimax(mesa, jogador, True, profundidade)
         else:
             while True:
                 try:
-                    i, j = map(int, input("Digite linha e coluna (0-3) para jogar (separado por espaço): ").split())
+                    i, j = map(int, input("Digite linha e coluna (separado por espaço): ").split())
                     if mesa[i][j] == " ":
                         break
                     else:
                         print("Posição já ocupada! Tente novamente.")
                 except ValueError:
-                    print("Entrada inválida! Por favor, digite dois números separados por espaço (ex: 1 2).")
+                    print("Entrada inválida! Digite números separados por espaço.")
                 except IndexError:
-                    print("Entrada fora do limite! Certifique-se de digitar números entre 0 e 3.")
+                    print("Entrada fora do limite! Digite números de 0 a 3.")
         
         mesa[i][j] = jogador
         jogador = 'O' if jogador == 'X' else 'X'
