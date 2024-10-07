@@ -49,42 +49,44 @@ def avaliarMinimax(mesa, jogador):
 
     #Avaliar linhas, colunas ou diagonais
     def avaliarSequencia(sequencia, jogador, oponente):
-        jogador_count = sum(1 for marca in sequencia if marca == jogador)
-        oponente_count = sum(1 for marca in sequencia if marca == oponente)
+        jogador_count = sum(1 for posicao in sequencia if posicao == jogador)
+        oponente_count = sum(1 for posicao in sequencia if posicao == oponente)
 
         #Avalia o oponente
         if oponente_count == 0:
             if jogador_count == 4:
-                return 10 #Jogador vai vencer
+                return 10  #Jogador vai vencer
             elif jogador_count == 3:
-                return 5 #Jogador prestes a vencer
+                return 5  #Jogador prestes a vencer
             elif jogador_count == 2:
-                return 2 #Jogador tem chance razoável
+                return 2  #Jogador tem chance razoável
 
         #Avalia o jogador
         if jogador_count == 0:
             if oponente_count == 4:
-                return -10 #Derrota garantida para jogador.
+                return -10  #Derrota garantida para jogador.
             elif oponente_count == 3:
-                return -5 #Oponente prestes a vencer.
+                return -5  #Oponente prestes a vencer.
             elif oponente_count == 2:
-                return -2 #Oponente tem chance razoável.
+                return -2  #Oponente tem chance razoável.
 
         return 0
 
-    #Aqui é feito a avaliação geral de estado para obter a pontuação
-    for i in range(4):
-        pontuacao += avaliarSequencia(mesa[i], jogador, oponente)
+    #Avaliar linhas
+    for linha in range(4):
+        pontuacao += avaliarSequencia(mesa[linha], jogador, oponente)
 
-    for j in range(4):
-        coluna = [mesa[i][j] for i in range(4)]
-        pontuacao += avaliarSequencia(coluna, jogador, oponente)
+    #Avaliar colunas
+    for coluna in range(4):
+        coluna_atual = [mesa[linha][coluna] for linha in range(4)]
+        pontuacao += avaliarSequencia(coluna_atual, jogador, oponente)
 
-    diagonal1 = [mesa[i][i] for i in range(4)]
-    diagonal2 = [mesa[i][3 - i] for i in range(4)]
+    #Avaliar diagonais
+    diagonal_principal = [mesa[indice][indice] for indice in range(4)]
+    diagonal_secundaria = [mesa[indice][3 - indice] for indice in range(4)]
     
-    pontuacao += avaliarSequencia(diagonal1, jogador, oponente)
-    pontuacao += avaliarSequencia(diagonal2, jogador, oponente)
+    pontuacao += avaliarSequencia(diagonal_principal, jogador, oponente)
+    pontuacao += avaliarSequencia(diagonal_secundaria, jogador, oponente)
 
     return pontuacao
 
