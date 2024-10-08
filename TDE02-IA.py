@@ -14,7 +14,6 @@ def imprimirMesa(mesa):
             print("├───┼───┼───┼───┤")
     print("└───┴───┴───┴───┘")
 
-
 def verificarMesaCheia(mesa):
     for linha in mesa:
         if " " in linha:
@@ -32,13 +31,13 @@ def verificarMesa(mesa, jogador):
         if all([mesa[linha][coluna] == jogador 
                 for linha in range(4)]):
             return True
-    
+
     if all([mesa[diagonal][diagonal] == jogador 
             for diagonal in range(4)]
         ) or all([mesa[diagonal][3-diagonal] == jogador 
                 for diagonal in range(4)]):
         return True
-    
+
     return False
 
 #Heurística avalia a posição de Max e Min em três dimensões: linhas, colunas e diagonais. 
@@ -47,46 +46,42 @@ def avaliarMinimax(mesa, jogador):
     oponente = 'O' if jogador == 'X' else 'X'
     pontuacao = 0
 
-    #Avaliar linhas, colunas ou diagonais
+    #Conta quantas posições pertencem ao jogador e ao oponente (linhas, colunas ou diagonais)
     def avaliarSequencia(sequencia, jogador, oponente):
-        jogador_count = sum(1 for posicao in sequencia if posicao == jogador)
-        oponente_count = sum(1 for posicao in sequencia if posicao == oponente)
+        jogadorCount = sum(1 for posicao in sequencia if posicao == jogador)
+        oponenteCount = sum(1 for posicao in sequencia if posicao == oponente)
 
         #Avalia o oponente
-        if oponente_count == 0:
-            if jogador_count == 4:
+        if oponenteCount == 0:
+            if jogadorCount == 4:
                 return 10  #Jogador vai vencer
-            elif jogador_count == 3:
+            elif jogadorCount == 3:
                 return 5  #Jogador prestes a vencer
-            elif jogador_count == 2:
+            elif jogadorCount == 2:
                 return 2  #Jogador tem chance razoável
 
         #Avalia o jogador
-        if jogador_count == 0:
-            if oponente_count == 4:
+        if jogadorCount == 0:
+            if oponenteCount == 4:
                 return -10  #Derrota garantida para jogador.
-            elif oponente_count == 3:
+            elif oponenteCount == 3:
                 return -5  #Oponente prestes a vencer.
-            elif oponente_count == 2:
+            elif oponenteCount == 2:
                 return -2  #Oponente tem chance razoável.
 
         return 0
 
-    #Avaliar linhas
     for linha in range(4):
         pontuacao += avaliarSequencia(mesa[linha], jogador, oponente)
 
-    #Avaliar colunas
     for coluna in range(4):
         coluna_atual = [mesa[linha][coluna] for linha in range(4)]
         pontuacao += avaliarSequencia(coluna_atual, jogador, oponente)
 
-    #Avaliar diagonais
-    diagonal_principal = [mesa[indice][indice] for indice in range(4)]
-    diagonal_secundaria = [mesa[indice][3 - indice] for indice in range(4)]
-    
-    pontuacao += avaliarSequencia(diagonal_principal, jogador, oponente)
-    pontuacao += avaliarSequencia(diagonal_secundaria, jogador, oponente)
+    diagonalPrincipal = [mesa[indice][indice] for indice in range(4)]
+    diagonalSecundaria = [mesa[indice][3 - indice] for indice in range(4)]
+    pontuacao += avaliarSequencia(diagonalPrincipal, jogador, oponente)
+    pontuacao += avaliarSequencia(diagonalSecundaria, jogador, oponente)
 
     return pontuacao
 
