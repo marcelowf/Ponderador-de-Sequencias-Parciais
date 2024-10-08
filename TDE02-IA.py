@@ -160,44 +160,63 @@ def jogadaMinimax(mesa, jogador, poda, profundidade):
                     melhorJogada = (linha, coluna)
     
     timerEnd = time.time()
-    print("O Computador demorou " + str(timerEnd - timerInit) + "segundos para realizar a jogada.")
+    print("O Computador demorou " + str(timerEnd - timerInit) + " segundos.")
     return melhorJogada
+
+def escolherEstrategia(jogador):
+    print(f"\nEstratégia do Computador {jogador}")
+    estrategia = int(input("   1. Aleatória\n   2. Minimax\n   3. Minimax com Alfa-Beta\nEscolha: "))
+    profundidade = None
+    if estrategia == 2 or estrategia == 3:
+        profundidade = int(input(f"Escolha a profundidade máxima para {jogador}: "))
+    return estrategia, profundidade
+
+def mostrarJogada(linha, coluna):
+    print(f"Jogada: Linha {linha + 1}, Coluna {coluna + 1}")
 
 def main():
     mesa = [[" " for _ in range(4)] for _ in range(4)]
-    modo = int(input("Jogo da Velha 4x4\n1. Humano vs Computador\n2. Computador vs Computador\nEscolha: "))
-    estrategia = int(input("Estratégia do Computador\n1. Aleatória\n2. Minimax\n3. Minimax com Alfa-Beta\nEscolha: "))
-    
-    if estrategia == 2 or estrategia == 3:
-        profundidade = int(input("Escolha a profundidade máxima: "))
-    
+    modo = int(input("Jogo da Velha 4x4\n   1. Humano vs Computador\n   2. Computador vs Computador\nEscolha: "))
+
+    if modo == 1:
+        estrategiaO, profundidadeO = escolherEstrategia('O')
+        estrategiaX, profundidadeX = None, None
+    else:
+        estrategiaX, profundidadeX = escolherEstrategia('X')
+        estrategiaO, profundidadeO = escolherEstrategia('O')
+
     jogador = 'X'
     while True:
         imprimirMesa(mesa)
-        
         if verificarMesa(mesa, 'X'):
-            print("Jogador X venceu!")
+            print("\nJogador X venceu!")
             break
-        if verificarMesa(mesa, 'O'):
-            print("Jogador O venceu!")
+        elif verificarMesa(mesa, 'O'):
+            print("\nJogador O venceu!")
             break
-        if verificarMesaCheia(mesa):
-            print("Empate!")
+        elif verificarMesaCheia(mesa):
+            print("\nEmpate!")
             break
-        
+
         if modo == 2 or (modo == 1 and jogador == 'O'):
+            if jogador == 'X':
+                estrategia = estrategiaX
+                profundidade = profundidadeX
+            else:
+                estrategia = estrategiaO
+                profundidade = profundidadeO
             if estrategia == 1:
-                jogadasPossiveis = [(i, j) for i in range(4) for j in range(4) if mesa[i][j] == " "]
-                i, j = random.choice(jogadasPossiveis)
+                jogadasPossiveis = [(linha, coluna) for linha in range(4) for coluna in range(4) if mesa[linha][coluna] == " "]
+                linha, coluna = random.choice(jogadasPossiveis)
             elif estrategia == 2:
-                i, j = jogadaMinimax(mesa, jogador, False, profundidade)
+                linha, coluna = jogadaMinimax(mesa, jogador, False, profundidade)
             elif estrategia == 3:
-                i, j = jogadaMinimax(mesa, jogador, True, profundidade)
+                linha, coluna = jogadaMinimax(mesa, jogador, True, profundidade)
         else:
             while True:
                 try:
-                    i, j = map(int, input("Digite linha e coluna (separado por espaço): ").split())
-                    if mesa[i][j] == " ":
+                    linha, coluna = map(int, input("Digite linha e coluna (separado por espaço): ").split())
+                    if mesa[linha][coluna] == " ":
                         break
                     else:
                         print("Posição já ocupada! Tente novamente.")
@@ -205,8 +224,9 @@ def main():
                     print("Entrada inválida! Digite números separados por espaço.")
                 except IndexError:
                     print("Entrada fora do limite! Digite números de 0 a 3.")
-        
-        mesa[i][j] = jogador
+
+        mesa[linha][coluna] = jogador
+        mostrarJogada(linha, coluna)
         jogador = 'O' if jogador == 'X' else 'X'
 
 main()
